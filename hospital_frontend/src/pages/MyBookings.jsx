@@ -88,12 +88,12 @@ const MyBookings = () => {
                   </p>
 
                   <div className="flex justify-between items-center mt-3">
-                    <button
+                    {/* <button
                       onClick={() => navigate(`/booking/${b.id}`, { state: b })}
                       className="text-blue-600 font-semibold hover:underline"
                     >
                       View Details →
-                    </button>
+                    </button> */}
                     {b.status !== "cancelled" && (
                       <button
                         className="bg-red-500 text-white text-sm px-4 py-1 rounded-full hover:bg-red-600 transition"
