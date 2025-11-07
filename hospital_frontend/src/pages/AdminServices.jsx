@@ -219,7 +219,8 @@ const AdminServices = ({ onLogout }) => {
       </div>
 
     {showModal && (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300">
+      <div style = "margin-top: 75px;" 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300">
         <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg transform transition-all scale-100 animate-fadeIn">
           <h2 className="text-2xl font-bold text-blue-600 mb-5 text-center">
             {isEditing ? "Edit Service" : "Add New Service"}
