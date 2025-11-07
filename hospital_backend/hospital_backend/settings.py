@@ -26,7 +26,12 @@ SECRET_KEY = 'django-insecure-phmztb+gx92^fhm3dk*=qlm7$v5drmya--v)==a0qp7=c#^agb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "kings-pet-hospital-main.onrender.com",
+    "kings-pet-hospital-main.vercel.app",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
