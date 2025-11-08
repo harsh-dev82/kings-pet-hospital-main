@@ -37,9 +37,9 @@ class LoginSerializer(serializers.Serializer):
         if not email or not password:
             raise serializers.ValidationError("Both email and password are required.")
 
-        try:
-            user_obj = User.objects.get(email=email)
-        except User.DoesNotExist:
+
+        user_obj = User.objects.filter(email=email).first()
+        if not user_obj:
             raise serializers.ValidationError("Invalid email or password.")
 
         # Authenticate using username (since Django authenticate uses username by default)
