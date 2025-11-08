@@ -55,17 +55,19 @@ const Header = ({ user, onLogout }) => {
                 alt="Kings Pet Hospital logo"
                 className="h-10 w-auto rounded-sm bg-white/90 p-1 shadow-sm"
               />
-              <h1
-                className={`text-2xl font-bold ${
-                  isAdminPage
-                    ? "text-white"
-                    : isScrolled
-                    ? "text-blue-600"
-                    : "text-white"
-                }`}
-              >
-                Kings Pet Hospital
-              </h1>
+              <Link to="/" className="no-underline">
+                <h1
+                  className={`text-2xl font-bold cursor-pointer transition-colors duration-300 ${
+                    isAdminPage
+                      ? "text-white hover:text-blue-200"
+                      : isScrolled
+                      ? "text-blue-600 hover:text-blue-800"
+                      : "text-white hover:text-blue-200"
+                  }`}
+                >
+                  Kings Pet Hospital
+                </h1>
+              </Link>
             </div>
 
             {/* Desktop Navigation */}
