@@ -8,6 +8,8 @@ const BookService = () => {
   const [petName, setPetName] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +24,7 @@ const BookService = () => {
   const handleBooking = async (e) => {
     e.preventDefault();
 
-    if (!petName || !date || !time) {
+    if (!petName || !date || !time || !email || !phone) {
       alert("Please fill all fields!");
       return;
     }
@@ -34,69 +36,78 @@ const BookService = () => {
       return;
     }
 
-    // 1️⃣ Create Booking
-    const bookingResponse = await fetch(`${API_BASE_URL}/bookings/create/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        service: id,
-        pet_name: petName,
-        appointment_date: date,
-        appointment_time: time,
-      }),
-    });
+    try {
+      // 🟢 1️⃣ Create Booking
+      const bookingResponse = await fetch(`${API_BASE_URL}/bookings/create/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          service: id,
+          pet_name: petName,
+          appointment_date: date,
+          appointment_time: time,
+          email: email,
+          phone_number: phone,
+        }),
+      });
 
-    const bookingData = await bookingResponse.json();
-    if (!bookingResponse.ok) {
-      alert("Booking failed.");
-      return;
+      const bookingData = await bookingResponse.json();
+      if (!bookingResponse.ok) {
+        alert(bookingData.error || "Booking failed.");
+        return;
+      }
+
+      // 💰 2️⃣ Create Razorpay Order
+      const price = parseInt(service.price.replace(/[^0-9]/g, "")) || 1000;
+      const orderResponse = await fetch(`${API_BASE_URL}/create-order/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ amount: price }),
+      });
+
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) {
+        alert("Payment initialization failed.");
+        return;
+      }
+
+      // 💳 3️⃣ Open Razorpay Checkout
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Kings Pet Hospital",
+        description: `Booking for ${service.name}`,
+        image: "/logo.jpg",
+        order_id: orderData.order_id,
+        handler: function (response) {
+          alert("Payment successful!");
+          navigate("/my-bookings");
+        },
+        prefill: {
+          name: JSON.parse(localStorage.getItem("user")).username,
+          email: email,
+          contact: phone,
+        },
+        theme: { color: "#2563EB" },
+      };
+
+      const razor = new window.Razorpay(options);
+      razor.open();
+    } catch (error) {
+      console.error("Error booking:", error);
+      alert("Something went wrong. Try again later.");
     }
-
-    // 2️⃣ Create Razorpay Order
-    const price = parseInt(service.price.replace(/[^0-9]/g, "")) || 1000;
-    const orderResponse = await fetch(`${API_BASE_URL}/create-order/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ amount: price }),
-    });
-
-    const orderData = await orderResponse.json();
-    if (!orderResponse.ok) {
-      alert("Payment initialization failed.");
-      return;
-    }
-
-    // 3️⃣ Open Razorpay Checkout
-    const options = {
-      key: orderData.key,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: "Kings Pet Hospital",
-      description: `Booking for ${service.name}`,
-      image: "/logo.jpg",
-      order_id: orderData.order_id,
-      handler: function (response) {
-        alert("Payment successful!");
-        navigate("/my-bookings");
-      },
-      prefill: {
-        name: JSON.parse(localStorage.getItem("user")).username,
-        email: JSON.parse(localStorage.getItem("user")).email,
-      },
-      theme: { color: "#2563EB" },
-    };
-
-    const razor = new window.Razorpay(options);
-    razor.open();
   };
 
-  if (!service) return <p className="text-center py-10">Loading...</p>;
+  if (!service)
+    return <p className="text-center py-10 text-gray-600">Loading service details...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-20 px-6">
@@ -109,36 +120,82 @@ const BookService = () => {
         <div className="p-8">
           <h1 className="text-3xl font-bold text-blue-600 mb-3">{service.name}</h1>
           <p className="text-gray-700 mb-4">{service.description}</p>
-          <p className="text-xl font-semibold text-blue-600 mb-4">
+          <p className="text-xl font-semibold text-blue-600 mb-6">
             Price: {service.price}
           </p>
 
-          <form onSubmit={handleBooking} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Pet Name"
-              value={petName}
-              onChange={(e) => setPetName(e.target.value)}
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full border p-3 rounded-lg"
-              required
-            />
+          <form onSubmit={handleBooking} className="space-y-5">
+            {/* 🐾 Pet Name */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Pet Name</label>
+              <input
+                type="text"
+                placeholder="Enter your pet’s name"
+                value={petName}
+                onChange={(e) => setPetName(e.target.value)}
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                required
+              />
+            </div>
+
+            {/* 📅 Appointment Date & Time */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Appointment Date
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Appointment Time
+                </label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* 📧 Email */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                required
+              />
+            </div>
+
+            {/* 📱 Phone */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
+              <input
+                type="tel"
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                required
+              />
+            </div>
+
+            {/* 💳 Submit */}
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all"
             >
               Confirm Booking & Pay
             </button>

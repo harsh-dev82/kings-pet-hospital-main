@@ -159,7 +159,7 @@ const Header = ({ user, onLogout }) => {
                 }`}
                 onClick={() => openWhatsApp()}
               >
-                Book Appointment
+                For Consultation
               </button>
             </div>
 
@@ -254,7 +254,7 @@ const Header = ({ user, onLogout }) => {
                   className="w-full mt-2 px-6 py-3 bg-blue-600 text-white rounded-full font-semibold transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   onClick={() => openWhatsApp()}
                 >
-                  Book Appointment
+                  For Consultation
                 </button>
               </div>
             </div>
@@ -278,11 +278,36 @@ const Header = ({ user, onLogout }) => {
                 Expert veterinarians, modern facilities, and loving attention.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
+                {/* 🟦 Book Now Button — Scrolls to Services */}
                 <button
+                  onClick={() => {
+                    const servicesSection = document.getElementById("services");
+                    if (servicesSection) {
+                      servicesSection.scrollIntoView({ behavior: "smooth" });
+                    } else {
+                      window.location.href = "/#services";
+                    }
+                  }}
                   className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold transition-all duration-300 hover:bg-blue-50 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
-                  onClick={() => openWhatsApp()}
                 >
                   Book Now
+                </button>
+
+                {/* 💬 WhatsApp Button — Opens Chat */}
+                <button
+                  onClick={() => openWhatsApp()}
+                  className="flex items-center justify-center gap-2 px-8 py-3 bg-green-500 text-white rounded-full font-semibold transition-all duration-300 hover:bg-green-600 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  <img
+                    src="/whatsapp-icon.png"
+                    alt="WhatsApp"
+                    className="w-5 h-5"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg";
+                    }}
+                  />
+                  WhatsApp
                 </button>
               </div>
             </div>
