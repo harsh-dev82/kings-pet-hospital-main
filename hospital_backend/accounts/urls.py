@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, AdminUserListView, UserProfileView, ServiceListView, BookingListView, BookingStatusUpdateView, ServiceListCreateView, ServiceDeleteView, UserBookingsView, BookingCreateView, CreateRazorpayOrderView, RazorpayWebhookView, ServiceDetailView
+from .views import RegisterView, LoginView, AdminUserListView, UserProfileView, ServiceListView, BookingListView, BookingStatusUpdateView, ServiceListCreateView, ServiceDeleteView, UserBookingsView, BookingCreateView, CreateRazorpayOrderView, RazorpayWebhookView, ServiceDetailView, AdminEarningsView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -17,4 +17,5 @@ urlpatterns = [
     path('bookings/create/', BookingCreateView.as_view(), name='create-booking'),
     path('create-order/', CreateRazorpayOrderView.as_view(), name='create-order'),
     path('webhook/razorpay/', RazorpayWebhookView.as_view(), name='razorpay-webhook'),
+    path('admin/earnings/', AdminEarningsView.as_view(), name='admin-earnings'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

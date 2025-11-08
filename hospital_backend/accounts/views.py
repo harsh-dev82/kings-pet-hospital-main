@@ -8,6 +8,8 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import hmac, hashlib, json
+from django.db.models import Sum
+from rest_framework.permissions import IsAdminUser
 
 from .models import CustomUser , Service,  Booking
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, ServiceSerializer, BookingSerializer
@@ -233,6 +235,7 @@ class UserBookingsView(generics.ListAPIView):
         return {'request': self.request}
     
 class BookingCreateView(generics.CreateAPIView):
+    queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -250,6 +253,12 @@ class BookingCreateView(generics.CreateAPIView):
             service = Service.objects.get(pk=service_id)
         except Service.DoesNotExist:
             return Response({"detail": "Invalid service."}, status=404)
+        
+        # ✅ Parse the price to a numeric value (e.g. ₹2,000 → 2000.0)
+        try:
+            amount = float(str(service.price).replace("₹", "").replace(",", "").strip())
+        except:
+            amount = 0.0
 
         booking = Booking.objects.create(
             user=user,
@@ -257,7 +266,8 @@ class BookingCreateView(generics.CreateAPIView):
             pet_name=pet_name,
             appointment_date=appointment_date,
             appointment_time=appointment_time,
-            status="pending"
+            status="pending",
+            amount=amount
         )
 
         serializer = self.get_serializer(booking, context={"request": request})
@@ -294,6 +304,7 @@ class CreateRazorpayOrderView(APIView):
             return Response({"error": str(e)}, status=500)
         
 @method_decorator(csrf_exempt, name='dispatch')
+
 class RazorpayWebhookView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -304,29 +315,52 @@ class RazorpayWebhookView(APIView):
             received_data = json.loads(body)
             signature = request.headers.get('X-Razorpay-Signature', '')
 
-            # Verify Razorpay signature
+            # ✅ Verify Razorpay signature
             generated_signature = hmac.new(
                 bytes(secret, 'utf-8'),
                 msg=bytes(body, 'utf-8'),
                 digestmod=hashlib.sha256
             ).hexdigest()
 
-            if hmac.compare_digest(generated_signature, signature):
-                payment_id = received_data["payload"]["payment"]["entity"]["id"]
-                order_id = received_data["payload"]["payment"]["entity"]["order_id"]
-                status_text = received_data["payload"]["payment"]["entity"]["status"]
-
-                # Update booking in DB
-                booking = Booking.objects.filter(order_id=order_id).first()
-                if booking:
-                    booking.payment_id = payment_id
-                    booking.payment_status = status_text
-                    if status_text == "captured":
-                        booking.status = "confirmed"
-                    booking.save()
-
-                return Response({"status": "success"})
-            else:
+            if not hmac.compare_digest(generated_signature, signature):
                 return Response({"error": "Invalid signature"}, status=400)
+
+            # ✅ Extract details from payload
+            payment_entity = received_data.get("payload", {}).get("payment", {}).get("entity", {})
+            payment_id = payment_entity.get("id")
+            order_id = payment_entity.get("order_id")
+            status_text = payment_entity.get("status", "")
+            amount_paid = payment_entity.get("amount", 0) / 100  # Razorpay sends in paise (₹1 = 100 paise)
+
+            # ✅ Find the related booking by order_id
+            booking = Booking.objects.filter(order_id=order_id).first()
+            if booking:
+                booking.payment_id = payment_id
+                booking.payment_status = status_text
+
+                # ✅ If payment is successful
+                if status_text == "captured":
+                    booking.status = "confirmed"
+                    # 🧮 Store the paid amount (in rupees)
+                    booking.amount = amount_paid
+
+                booking.save()
+
+                return Response({"status": "success", "message": "Booking updated."}, status=200)
+
+            return Response({"error": "Booking not found"}, status=404)
+
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+        
+class AdminEarningsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        # Include only confirmed or completed bookings
+        total_earnings = Booking.objects.filter(
+            status__in=["confirmed", "completed"]
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        return Response({"total_earnings": total_earnings}, status=200)        
