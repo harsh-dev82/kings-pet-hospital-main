@@ -99,11 +99,7 @@ const Header = ({ user, onLogout }) => {
                   {user && (
                     <Link
                       to="/my-bookings"
-                      className={`transition-colors duration-300 ${
-                        isScrolled
-                          ? "text-gray-600 hover:text-blue-600"
-                          : "text-white hover:text-blue-200"
-                      }`}
+                      className={`transition-colors duration-300 ${linkColorClasses}`}
                     >
                       My Bookings
                     </Link>

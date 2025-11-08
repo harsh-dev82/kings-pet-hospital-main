@@ -19,6 +19,8 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminServices from "./pages/AdminServices";
 import MyBookings from "./pages/MyBookings";
 import BookService from "./pages/BookService";
+import AdminUsers from "./pages/AdminUsers";
+
 
 // 🔒 Protected Route Component for Admins
 const ProtectedRoute = ({ user, children }) => {
@@ -90,6 +92,15 @@ function AppContent() {
             element={
               <ProtectedRoute user={user}>
                 <AdminServices onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute user={user}>
+                <AdminUsers onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />

@@ -2,26 +2,36 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import { API_BASE_URL } from "../config";
 
-
 const AdminDashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
+  const [earnings, setEarnings] = useState(0);
 
   // Fetch all data
   const fetchData = async () => {
     const token = localStorage.getItem("access");
     const headers = { Authorization: `Bearer ${token}` };
 
-    const [usersRes, bookingsRes, servicesRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/users/`, { headers }),
-      fetch(`${API_BASE_URL}/bookings/all/`, { headers }),
-      fetch(`${API_BASE_URL}/services/`),
-    ]);
+    try {
+      const [usersRes, bookingsRes, servicesRes, earningsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/users/`, { headers }),
+        fetch(`${API_BASE_URL}/bookings/all/`, { headers }),
+        fetch(`${API_BASE_URL}/services/`),
+        fetch(`${API_BASE_URL}/admin/earnings/`, { headers }), // 💰 New API
+      ]);
 
-    if (usersRes.ok) setUsers(await usersRes.json());
-    if (bookingsRes.ok) setBookings(await bookingsRes.json());
-    if (servicesRes.ok) setServices(await servicesRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+      if (bookingsRes.ok) setBookings(await bookingsRes.json());
+      if (servicesRes.ok) setServices(await servicesRes.json());
+
+      if (earningsRes.ok) {
+        const data = await earningsRes.json();
+        setEarnings(data.total_earnings || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching admin data:", error);
+    }
   };
 
   useEffect(() => {
@@ -31,7 +41,7 @@ const AdminDashboard = ({ onLogout }) => {
   return (
     <AdminLayout onLogout={onLogout}>
       {/* 🧮 Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600 text-center">
           <h3 className="text-gray-500 text-lg mb-2">Total Users</h3>
           <p className="text-4xl font-bold text-blue-600">{users.length}</p>
@@ -45,6 +55,14 @@ const AdminDashboard = ({ onLogout }) => {
         <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 text-center">
           <h3 className="text-gray-500 text-lg mb-2">Total Services</h3>
           <p className="text-4xl font-bold text-yellow-600">{services.length}</p>
+        </div>
+
+        {/* 💰 Total Earnings */}
+        <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-purple-500 text-center">
+          <h3 className="text-gray-500 text-lg mb-2">Total Earnings</h3>
+          <p className="text-4xl font-bold text-purple-600">
+            ₹{Number(earnings).toLocaleString()}
+          </p>
         </div>
       </div>
 
