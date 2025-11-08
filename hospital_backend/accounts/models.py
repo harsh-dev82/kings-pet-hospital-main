@@ -36,6 +36,8 @@ class Booking(models.Model):
     pet_name = models.CharField(max_length=100)
     appointment_date = models.DateField()
     appointment_time = models.TimeField()
+    email = models.EmailField(null=True, blank=True)  # ✅ New field
+    phone_number = models.CharField(max_length=15)  # ✅ New field
     notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)

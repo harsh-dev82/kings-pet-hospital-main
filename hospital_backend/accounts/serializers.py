@@ -72,8 +72,12 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            'id', 'user_name', 'user_email', 'service_name', 'service_image',
-            'pet_name', 'appointment_date', 'appointment_time', 'status'
+            'id',
+            'user_name', 'user_email',
+            'service_name', 'service_image',
+            'pet_name', 'appointment_date', 'appointment_time',
+            'email', 'phone_number',  # ✅ Newly added
+            'status',
         ]
 
     def get_service_image(self, obj):
